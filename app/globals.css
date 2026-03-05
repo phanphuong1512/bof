@@ -1,26 +1,112 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  --color-navy-950: #060b18;
+  --color-navy-900: #0a0f1e;
+  --color-navy-800: #0d1526;
+  --color-navy-700: #141d33;
+  --color-navy-600: #1c2840;
+  --color-navy-500: #253451;
+
+  --color-purple-primary: #a855f7;
+  --color-purple-light: #c084fc;
+  --color-purple-dark: #7c3aed;
+
+  --color-muted: #8892b0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  --background: #0a0f1e;
+  --foreground: #e2e8f0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #0d1526;
+}
+::-webkit-scrollbar-thumb {
+  background: #2d3a5a;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a855f7;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #c084fc 0%, #a855f7 50%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Trending big number */
+.trending-number {
+  font-size: clamp(90px, 12vw, 150px);
+  font-weight: 900;
+  line-height: 1;
+  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.07);
+  color: transparent;
+  user-select: none;
+  font-style: italic;
+  letter-spacing: -4px;
+}
+
+/* Card hover lift */
+.movie-card {
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.movie-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 48px rgba(168, 85, 247, 0.22);
+}
+
+/* Hero poster fan */
+.poster-fan {
+  position: relative;
+  width: 380px;
+  height: 400px;
+  flex-shrink: 0;
+}
+
+/* Horizontal scroll for trending */
+.trending-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #2d3a5a #0d1526;
+  padding-bottom: 8px;
+}
+
+/* Search bar glass */
+.search-bar {
+  background: rgba(13, 21, 38, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }

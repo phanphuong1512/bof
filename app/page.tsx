@@ -1,65 +1,83 @@
-import Image from "next/image";
+import Navbar from "@/components/Navbar";
+import HeroSection from "@/components/HeroSection";
+import TrendingSection from "@/components/TrendingSection";
+import MovieGrid from "@/components/MovieGrid";
+import Pagination from "@/components/Pagination";
+import { getRecentMovies } from "@/lib/api";
 
-export default function Home() {
+type SearchParams = Promise<{ page?: string }>;
+
+const Divider = () => (
+  <div className="max-w-[1400px] mx-auto px-6">
+    <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)" }} />
+  </div>
+);
+
+export default async function Home({ searchParams }: { searchParams: SearchParams }) {
+  const { page } = await searchParams;
+  const currentPage = Math.max(1, Number(page ?? 1));
+
+  // Fetch page 1 always (for hero + trending).
+  // If currentPage > 1, fetch that page too in parallel.
+  const [page1Data, pageNData] = await Promise.all([
+    getRecentMovies(1),
+    currentPage > 1 ? getRecentMovies(currentPage) : Promise.resolve(null),
+  ]);
+
+  const gridData = pageNData ?? page1Data;
+  const { items: gridMovies, paginate } = gridData;
+  const trendingMovies = page1Data.items.slice(0, 5);
+  const heroMovies = page1Data.items.slice(0, 6);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen" style={{ background: "#0a0f1e" }}>
+      <Navbar />
+
+      {/* Hero + Trending only on first page */}
+      {currentPage === 1 && (
+        <>
+          <HeroSection featuredMovies={heroMovies} />
+          <Divider />
+          <TrendingSection movies={trendingMovies} />
+          <Divider />
+        </>
+      )}
+
+      {/* Spacer for fixed navbar on page 2+ */}
+      {currentPage > 1 && <div className="h-20" />}
+
+      {/* Movie grid */}
+      <MovieGrid
+        movies={gridMovies}
+        title="Phim Mới Cập Nhật"
+        showViewAll={false}
+      />
+
+      {/* Pagination */}
+      <div className="max-w-[1400px] mx-auto px-6 pb-14">
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-xs text-[#4a5568]">
+            Trang {paginate.current_page} / {paginate.total_page}
+            &ensp;&middot;&ensp;
+            {paginate.total_items.toLocaleString("vi-VN")} phim
           </p>
+          <Pagination current={paginate.current_page} total={paginate.total_page} baseHref="/" />
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </div>
+
+      {/* Footer */}
+      <footer className="py-8" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="max-w-[1400px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="text-[#8892b0] text-sm">© 2025 BOF. All rights reserved.</span>
+          <div className="flex items-center gap-6">
+            {["Privacy", "Terms", "Contact"].map((item) => (
+              <a key={item} href="#" className="text-[#8892b0] text-sm hover:text-white transition-colors">
+                {item}
+              </a>
+            ))}
+          </div>
         </div>
-      </main>
+      </footer>
     </div>
   );
 }
