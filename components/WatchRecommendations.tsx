@@ -39,7 +39,6 @@ export default function WatchRecommendations({ movies }: Props) {
                 fill
                 sizes="100px"
                 style={{ objectFit: "cover" }}
-                unoptimized
               />
               {/* Episode overlay */}
               <span

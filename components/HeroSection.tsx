@@ -135,8 +135,8 @@ function PosterFan({ posters }: { posters: { src: string; slug: string; name: st
             src={poster.src}
             alt={poster.name}
             fill
+            sizes="180px"
             style={{ objectFit: "cover" }}
-            unoptimized
           />
         </Link>
       ))}

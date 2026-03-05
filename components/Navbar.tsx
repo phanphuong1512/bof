@@ -82,7 +82,7 @@ function NavDropdown({
   cols?: number;
 }) {
   const [open, setOpen] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   function show() {
     clearTimeout(timerRef.current);

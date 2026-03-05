@@ -23,9 +23,10 @@ export default function MovieDetailHero({ movie }: Props) {
           src={movie.poster_url || movie.thumb_url}
           alt={movie.name}
           fill
+          sizes="100vw"
+          quality={85}
           style={{ objectFit: "cover", objectPosition: "top" }}
           priority
-          unoptimized
         />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #0a0f1e 0%, rgba(10,15,30,0.3) 60%)" }} />
         <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(10,15,30,0.9) 0%, transparent 55%)" }} />
@@ -46,11 +47,11 @@ export default function MovieDetailHero({ movie }: Props) {
               }}
             >
               <Image
-                src={movie.thumb_url}
+                src={movie.poster_url || movie.thumb_url}
                 alt={movie.name}
                 fill
+                sizes="160px"
                 style={{ objectFit: "cover" }}
-                unoptimized
               />
             </div>
 

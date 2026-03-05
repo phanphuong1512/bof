@@ -24,11 +24,11 @@ export default function WatchInfo({ movie }: Props) {
         }}
       >
         <Image
-          src={movie.thumb_url}
+          src={movie.poster_url || movie.thumb_url}
           alt={movie.name}
           fill
+          sizes="120px"
           style={{ objectFit: "cover" }}
-          unoptimized
         />
       </Link>
 

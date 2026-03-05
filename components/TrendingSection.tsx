@@ -82,13 +82,12 @@ function TrendingCard({ movie, rank }: { movie: ApiMovie; rank: number }) {
           }}
         >
           <Image
-            src={movie.thumb_url}
+            src={movie.poster_url || movie.thumb_url}
             alt={movie.name}
             fill
-            sizes="20vw"
+            sizes="(max-width: 640px) 30vw, (max-width: 1024px) 20vw, 13vw"
             style={{ objectFit: "cover" }}
             className="group-hover:scale-105 transition-transform duration-300"
-            unoptimized
           />
           {/* Episode badge */}
           <span

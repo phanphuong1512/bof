@@ -27,13 +27,12 @@ export default function MovieCard({ movie }: { movie: ApiMovie }) {
         }}
       >
         <Image
-          src={movie.thumb_url}
+          src={movie.poster_url || movie.thumb_url}
           alt={movie.name}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
           style={{ objectFit: "cover" }}
           className="group-hover:scale-105 transition-transform duration-300"
-          unoptimized
         />
 
         {/* Quality — top left */}

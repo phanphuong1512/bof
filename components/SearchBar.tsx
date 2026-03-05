@@ -20,7 +20,7 @@ export default function SearchBar() {
   const [activeIdx, setActiveIdx] = useState(-1);
 
   const router = useRouter();
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -189,7 +189,6 @@ export default function SearchBar() {
                   fill
                   sizes="48px"
                   style={{ objectFit: "cover" }}
-                  unoptimized
                 />
               </div>
 
