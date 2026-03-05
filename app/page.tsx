@@ -1,6 +1,7 @@
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import TrendingSection from "@/components/TrendingSection";
+import FilterBar from "@/components/FilterBar";
 import MovieGrid from "@/components/MovieGrid";
 import Pagination from "@/components/Pagination";
 import { getRecentMovies } from "@/lib/api";
@@ -39,6 +40,8 @@ export default async function Home({ searchParams }: { searchParams: SearchParam
           <HeroSection featuredMovies={heroMovies} />
           <Divider />
           <TrendingSection movies={trendingMovies} />
+          <Divider />
+          <FilterBar />
           <Divider />
         </>
       )}
