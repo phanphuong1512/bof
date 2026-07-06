@@ -1,13 +1,124 @@
 "use client";
 
+import { forwardRef, useImperativeHandle, useRef, useEffect } from "react";
+
+export interface VideoPlayerRef {
+  play: () => void;
+  pause: () => void;
+  seekTo: (time: number) => void;
+  getCurrentTime: () => number;
+  getDuration: () => number;
+  getIsPlaying: () => boolean;
+}
+
 interface Props {
   movieTitle: string;
   episodeNumber?: number;
   embedUrl?: string;
   m3u8Url?: string;
+  onUserPlay?: (time: number) => void;
+  onUserPause?: (time: number) => void;
+  onUserSeek?: (time: number) => void;
 }
 
-export default function VideoPlayer({ movieTitle, episodeNumber, embedUrl, m3u8Url }: Props) {
+const VideoPlayer = forwardRef<VideoPlayerRef, Props>(function VideoPlayer(
+  { movieTitle, episodeNumber, embedUrl, m3u8Url, onUserPlay, onUserPause, onUserSeek },
+  ref
+) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  // Track remote actions to prevent feedback loops
+  const remotePlayCount = useRef(0);
+  const remotePauseCount = useRef(0);
+  const remoteSeekCount = useRef(0);
+
+  useImperativeHandle(ref, () => ({
+    play: () => {
+      if (videoRef.current) {
+        remotePlayCount.current++;
+        videoRef.current.play().catch(() => {});
+      }
+    },
+    pause: () => {
+      if (videoRef.current) {
+        remotePauseCount.current++;
+        videoRef.current.pause();
+      }
+    },
+    seekTo: (time: number) => {
+      if (videoRef.current) {
+        remoteSeekCount.current++;
+        videoRef.current.currentTime = time;
+      }
+    },
+    getCurrentTime: () => videoRef.current?.currentTime || 0,
+    getDuration: () => videoRef.current?.duration || 0,
+    getIsPlaying: () => videoRef.current ? !videoRef.current.paused : false,
+  }));
+
+  // Handle HLS luồng m3u8
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !m3u8Url) return;
+
+    let hls: any = null;
+
+    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      // Hỗ trợ HLS mặc định (Safari, iOS Safari)
+      video.src = m3u8Url;
+    } else {
+      // Sử dụng hls.js cho các trình duyệt khác (Chrome, Firefox, Edge...)
+      import("hls.js").then((M) => {
+        const HlsClass = M.default;
+        if (HlsClass.isSupported()) {
+          hls = new HlsClass({
+            maxMaxBufferLength: 10, // Giới hạn bộ đệm để giảm độ trễ
+          });
+          hls.loadSource(m3u8Url);
+          hls.attachMedia(video);
+        }
+      });
+    }
+
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+      video.src = "";
+    };
+  }, [m3u8Url]);
+
+  // Video event handlers
+  const handlePlay = () => {
+    if (remotePlayCount.current > 0) {
+      remotePlayCount.current--;
+      return;
+    }
+    if (onUserPlay && videoRef.current) {
+      onUserPlay(videoRef.current.currentTime);
+    }
+  };
+
+  const handlePause = () => {
+    if (remotePauseCount.current > 0) {
+      remotePauseCount.current--;
+      return;
+    }
+    if (onUserPause && videoRef.current) {
+      onUserPause(videoRef.current.currentTime);
+    }
+  };
+
+  const handleSeeked = () => {
+    if (remoteSeekCount.current > 0) {
+      remoteSeekCount.current--;
+      return;
+    }
+    if (onUserSeek && videoRef.current) {
+      onUserSeek(videoRef.current.currentTime);
+    }
+  };
+
   return (
     <div className="w-full">
       {/* Player container — 16:9 */}
@@ -19,7 +130,16 @@ export default function VideoPlayer({ movieTitle, episodeNumber, embedUrl, m3u8U
           border: "1px solid rgba(255,255,255,0.06)",
         }}
       >
-        {embedUrl ? (
+        {m3u8Url ? (
+          <video
+            ref={videoRef}
+            className="absolute inset-0 w-full h-full"
+            controls
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onSeeked={handleSeeked}
+          />
+        ) : embedUrl ? (
           <iframe
             src={embedUrl}
             className="absolute inset-0 w-full h-full"
@@ -56,10 +176,10 @@ export default function VideoPlayer({ movieTitle, episodeNumber, embedUrl, m3u8U
         style={{ background: "rgba(255,255,255,0.02)", borderTop: "1px solid rgba(255,255,255,0.06)" }}
       >
         <div className="flex items-center gap-3 flex-wrap">
-          <ControlBtn icon="heart" label="Favorite" />
-          <ControlBtn icon="plus" label="Watchlist" />
-          <ControlBtn icon="share" label="Share" />
-          <ControlBtn icon="flag" label="Report" />
+          <ControlBtn icon="heart" label="Yêu thích" />
+          <ControlBtn icon="plus" label="Danh sách" />
+          <ControlBtn icon="share" label="Chia sẻ" />
+          <ControlBtn icon="flag" label="Báo lỗi" />
         </div>
 
         <div className="flex items-center gap-3">
@@ -84,13 +204,15 @@ export default function VideoPlayer({ movieTitle, episodeNumber, embedUrl, m3u8U
               <span className="hidden sm:inline">HLS</span>
             </a>
           )}
-          <ToggleBtn label="Autoplay" defaultOn />
-          <ToggleBtn label="Theater" />
+          <ToggleBtn label="Tự động phát" defaultOn />
+          <ToggleBtn label="Rạp chiếu" />
         </div>
       </div>
     </div>
   );
-}
+});
+
+export default VideoPlayer;
 
 function ControlBtn({ icon, label }: { icon: string; label: string }) {
   const paths: Record<string, React.ReactNode> = {

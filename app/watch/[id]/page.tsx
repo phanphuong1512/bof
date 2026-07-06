@@ -1,5 +1,5 @@
 import Navbar from "@/components/Navbar";
-import VideoPlayer from "@/components/VideoPlayer";
+import WatchPartyRoom from "@/components/WatchPartyRoom";
 import WatchRecommendations from "@/components/WatchRecommendations";
 import WatchInfo from "@/components/WatchInfo";
 import ApiEpisodeSection from "@/components/ApiEpisodeSection";
@@ -7,7 +7,7 @@ import CommentSection from "@/components/CommentSection";
 import { getFilmDetail, getRecentMovies } from "@/lib/api";
 
 type Params = Promise<{ id: string }>;
-type SearchParams = Promise<{ ep?: string; server?: string }>;
+type SearchParams = Promise<{ ep?: string; server?: string; party?: string }>;
 
 export default async function WatchPage({
   params,
@@ -17,7 +17,7 @@ export default async function WatchPage({
   searchParams: SearchParams;
 }) {
   const { id } = await params; // id is the movie slug
-  const { ep, server } = await searchParams;
+  const { ep, server, party } = await searchParams;
   const serverIdx = Number(server ?? 0);
 
   const [detailData, recData] = await Promise.all([
@@ -44,31 +44,45 @@ export default async function WatchPage({
       {/* Spacer for fixed navbar */}
       <div className="h-16" />
 
-      {/* ===== Main area: Player + Recommendations sidebar ===== */}
+      {/* ===== Main area: Player + Recommendations/Chat sidebar ===== */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pt-4">
-        <div className="flex flex-col lg:flex-row gap-5">
+        {party ? (
+          /* Watch Party active: Full-width layout handled internally (splits into Player + Chat) */
+          <WatchPartyRoom
+            movieTitle={movie.name}
+            movieSlug={movie.slug}
+            episodeNumber={episodeName ? Number(episodeName) || undefined : undefined}
+            embedUrl={embedUrl || undefined}
+            m3u8Url={m3u8Url || undefined}
+            episodeSlug={ep}
+          />
+        ) : (
+          /* Normal mode: Split layout with recommendations sidebar */
+          <div className="flex flex-col lg:flex-row gap-5">
+            {/* Left — Player with Watch Party trigger */}
+            <div className="w-full lg:flex-1 min-w-0">
+              <WatchPartyRoom
+                movieTitle={movie.name}
+                movieSlug={movie.slug}
+                episodeNumber={episodeName ? Number(episodeName) || undefined : undefined}
+                embedUrl={embedUrl || undefined}
+                m3u8Url={m3u8Url || undefined}
+                episodeSlug={ep}
+              />
+            </div>
 
-          {/* Left — Video player */}
-          <div className="w-full lg:flex-1 min-w-0">
-            <VideoPlayer
-              movieTitle={movie.name}
-              episodeNumber={episodeName ? Number(episodeName) || undefined : undefined}
-              embedUrl={embedUrl || undefined}
-              m3u8Url={m3u8Url || undefined}
-            />
+            {/* Right — Recommendations sidebar */}
+            <div
+              className="w-full lg:w-[340px] lg:flex-shrink-0 rounded-xl p-4 lg:max-h-[580px] lg:overflow-y-auto"
+              style={{
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <WatchRecommendations movies={recommendations} />
+            </div>
           </div>
-
-          {/* Right — Recommendations sidebar */}
-          <div
-            className="w-full lg:w-[340px] lg:flex-shrink-0 rounded-xl p-4 lg:max-h-[580px] lg:overflow-y-auto"
-            style={{
-              background: "rgba(255,255,255,0.02)",
-              border: "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            <WatchRecommendations movies={recommendations} />
-          </div>
-        </div>
+        )}
       </div>
 
       {/* ===== Below player: Info + Episodes + Comments ===== */}
