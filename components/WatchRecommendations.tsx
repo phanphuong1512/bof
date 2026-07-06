@@ -34,7 +34,7 @@ export default function WatchRecommendations({ movies }: Props) {
               style={{ width: 100, height: 60 }}
             >
               <Image
-                src={movie.thumb_url}
+                src={movie.poster_url || movie.thumb_url}
                 alt={movie.name}
                 fill
                 sizes="100px"

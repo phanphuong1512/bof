@@ -184,7 +184,7 @@ export default function SearchBar() {
               {/* Thumbnail */}
               <div className="relative flex-shrink-0 rounded-lg overflow-hidden" style={{ width: 48, height: 68 }}>
                 <Image
-                  src={movie.thumb_url}
+                  src={movie.thumb_url || movie.poster_url}
                   alt={movie.name}
                   fill
                   sizes="48px"

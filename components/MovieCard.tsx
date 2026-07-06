@@ -27,7 +27,7 @@ export default function MovieCard({ movie }: { movie: ApiMovie }) {
         }}
       >
         <Image
-          src={movie.poster_url || movie.thumb_url}
+          src={movie.thumb_url || movie.poster_url}
           alt={movie.name}
           fill
           sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"

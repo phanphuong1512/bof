@@ -11,7 +11,7 @@ export default function HeroSection({ featuredMovies }: Props) {
   // Pick 3 movies for the poster fan
   const posters = featuredMovies
     .slice(0, 3)
-    .map((m) => ({ src: m.poster_url || m.thumb_url, slug: m.slug, name: m.name }));
+    .map((m) => ({ src: m.thumb_url || m.poster_url, slug: m.slug, name: m.name }));
 
   return (
     <section

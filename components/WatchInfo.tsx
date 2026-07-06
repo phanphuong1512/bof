@@ -24,7 +24,7 @@ export default function WatchInfo({ movie }: Props) {
         }}
       >
         <Image
-          src={movie.poster_url || movie.thumb_url}
+          src={movie.thumb_url || movie.poster_url}
           alt={movie.name}
           fill
           sizes="120px"

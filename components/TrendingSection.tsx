@@ -82,7 +82,7 @@ function TrendingCard({ movie, rank }: { movie: ApiMovie; rank: number }) {
           }}
         >
           <Image
-            src={movie.poster_url || movie.thumb_url}
+            src={movie.thumb_url || movie.poster_url}
             alt={movie.name}
             fill
             sizes="(max-width: 640px) 30vw, (max-width: 1024px) 20vw, 13vw"

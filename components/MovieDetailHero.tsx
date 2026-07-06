@@ -47,7 +47,7 @@ export default function MovieDetailHero({ movie }: Props) {
               }}
             >
               <Image
-                src={movie.poster_url || movie.thumb_url}
+                src={movie.thumb_url || movie.poster_url}
                 alt={movie.name}
                 fill
                 sizes="160px"
