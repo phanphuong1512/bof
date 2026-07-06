@@ -50,8 +50,40 @@ export default function WatchPartyRoom({
   const [participantCount, setParticipantCount] = useState(1);
 
   const [isLoadingRoom, setIsLoadingRoom] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const latestRoomState = useRef<any>(null);
 
   const isHost = userId === hostId;
+
+  // Hàm đồng bộ video theo trạng thái state từ Firebase
+  const syncPlayerWithState = (state: any) => {
+    if (!db) return;
+    const { isPlaying, currentTime, updatedAt } = state;
+    const player = playerRef.current;
+    if (!player) return;
+
+    // Tính toán thời gian mong muốn dựa trên độ trễ truyền tin
+    const elapsed = (Date.now() - updatedAt) / 1000;
+    const expectedTime = isPlaying ? currentTime + elapsed : currentTime;
+    
+    const localIsPlaying = player.getIsPlaying();
+    const localTime = player.getCurrentTime();
+
+    // Đồng bộ trạng thái Phát/Tạm dừng
+    if (isPlaying && !localIsPlaying) {
+      player.seekTo(expectedTime);
+      player.play();
+    } else if (!isPlaying && localIsPlaying) {
+      player.pause();
+      player.seekTo(expectedTime);
+    }
+
+    // Đồng bộ Tua (Seek) nếu lệch quá 1.8 giây
+    const drift = Math.abs(localTime - expectedTime);
+    if (drift > 1.8) {
+      player.seekTo(expectedTime);
+    }
+  };
 
   // 1. Khởi tạo userId và username ngẫu nhiên từ localStorage/sessionStorage
   useEffect(() => {
@@ -96,32 +128,13 @@ export default function WatchPartyRoom({
         setParticipantCount(1);
       }
 
-      // Đồng bộ trạng thái chơi nhạc/phim của Guest từ Host
-      if (data.state && userId !== data.hostId) {
-        const { isPlaying, currentTime, updatedAt } = data.state;
-        const player = playerRef.current;
-        if (player) {
-          // Tính độ lệch thời gian do độ trễ truyền tin
-          const elapsed = (Date.now() - updatedAt) / 1000;
-          const expectedTime = isPlaying ? currentTime + elapsed : currentTime;
-          
-          const localIsPlaying = player.getIsPlaying();
-          const localTime = player.getCurrentTime();
-
-          // Đồng bộ Play/Pause
-          if (isPlaying && !localIsPlaying) {
-            player.seekTo(expectedTime);
-            player.play();
-          } else if (!isPlaying && localIsPlaying) {
-            player.pause();
-            player.seekTo(expectedTime);
-          }
-
-          // Đồng bộ Tua (Seek) nếu lệch quá 1.5 giây
-          const drift = Math.abs(localTime - expectedTime);
-          if (drift > 1.8) {
-            player.seekTo(expectedTime);
-          }
+      // Lưu trữ trạng thái mới nhất vào ref
+      if (data.state) {
+        latestRoomState.current = data.state;
+        
+        // Chỉ tiến hành đồng bộ nếu trình phát đã sẵn sàng và người dùng không phải Host
+        if (isPlayerReady && userId !== data.hostId) {
+          syncPlayerWithState(data.state);
         }
       }
 
@@ -153,7 +166,14 @@ export default function WatchPartyRoom({
       // Rời phòng: xóa trạng thái có mặt
       set(ref(db, `rooms/${partyRoomId}/participants/${userId}`), null);
     };
-  }, [partyRoomId, userId, username]);
+  }, [partyRoomId, userId, username, isPlayerReady]);
+
+  // Đồng bộ thời gian ban đầu ngay khi trình phát video báo SẴN SÀNG (loadedmetadata)
+  useEffect(() => {
+    if (isPlayerReady && latestRoomState.current && userId && userId !== hostId) {
+      syncPlayerWithState(latestRoomState.current);
+    }
+  }, [isPlayerReady, userId, hostId]);
 
   // Tự động cuộn chat xuống dưới cùng
   useEffect(() => {
@@ -284,6 +304,7 @@ export default function WatchPartyRoom({
           onUserPlay={handleUserPlay}
           onUserPause={handleUserPause}
           onUserSeek={handleUserSeek}
+          onReady={() => setIsPlayerReady(true)}
         />
 
         {/* Bảng điều khiển Watch Party phía dưới Player */}

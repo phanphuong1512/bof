@@ -19,10 +19,11 @@ interface Props {
   onUserPlay?: (time: number) => void;
   onUserPause?: (time: number) => void;
   onUserSeek?: (time: number) => void;
+  onReady?: () => void;
 }
 
 const VideoPlayer = forwardRef<VideoPlayerRef, Props>(function VideoPlayer(
-  { movieTitle, episodeNumber, embedUrl, m3u8Url, onUserPlay, onUserPause, onUserSeek },
+  { movieTitle, episodeNumber, embedUrl, m3u8Url, onUserPlay, onUserPause, onUserSeek, onReady },
   ref
 ) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -119,6 +120,12 @@ const VideoPlayer = forwardRef<VideoPlayerRef, Props>(function VideoPlayer(
     }
   };
 
+  const handleLoadedMetadata = () => {
+    if (onReady) {
+      onReady();
+    }
+  };
+
   return (
     <div className="w-full">
       {/* Player container — 16:9 */}
@@ -138,6 +145,7 @@ const VideoPlayer = forwardRef<VideoPlayerRef, Props>(function VideoPlayer(
             onPlay={handlePlay}
             onPause={handlePause}
             onSeeked={handleSeeked}
+            onLoadedMetadata={handleLoadedMetadata}
           />
         ) : embedUrl ? (
           <iframe
