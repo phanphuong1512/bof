@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ApiMovieDetail, getCategoryList } from "@/types/api";
@@ -9,27 +10,68 @@ interface Props {
 }
 
 export default function MovieDetailHero({ movie }: Props) {
+  const [isPortrait, setIsPortrait] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+
   const years = getCategoryList(movie.category, "Năm");
   const firstEp = movie.episodes?.[0]?.items?.[0]?.slug ?? "";
   const watchHref = firstEp
     ? `/watch/${movie.slug}?ep=${firstEp}&server=0`
     : `/watch/${movie.slug}`;
 
+  const imageUrl = movie.poster_url || movie.thumb_url;
+
   return (
     <section className="relative w-full">
       {/* Backdrop image */}
-      <div className="relative w-full" style={{ height: "clamp(280px, 42vw, 520px)" }}>
-        <Image
-          src={movie.poster_url || movie.thumb_url}
-          alt={movie.name}
-          fill
-          sizes="100vw"
-          quality={85}
-          style={{ objectFit: "cover", objectPosition: "top" }}
-          priority
-        />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to top, #0a0f1e 0%, rgba(10,15,30,0.3) 60%)" }} />
-        <div className="absolute inset-0" style={{ background: "linear-gradient(to right, rgba(10,15,30,0.9) 0%, transparent 55%)" }} />
+      <div 
+        className="relative w-full overflow-hidden bg-[#060b18]" 
+        style={{ height: "clamp(300px, 45vw, 520px)" }}
+      >
+        {/* Layer 1: Blurred Ambient Glow */}
+        <div className="absolute inset-0 select-none pointer-events-none opacity-25 scale-105 filter blur-3xl">
+          <Image
+            src={imageUrl}
+            alt=""
+            fill
+            sizes="100vw"
+            style={{ objectFit: "cover", objectPosition: "center" }}
+          />
+        </div>
+
+        {/* Layer 2: Sharp Centered Image (Only shown if landscape) */}
+        <div className="absolute inset-0 flex justify-center items-center">
+          <div className="relative w-full h-full max-w-[1400px]">
+            <Image
+              src={imageUrl}
+              alt={movie.name}
+              fill
+              sizes="(max-width: 1400px) 100vw, 1400px"
+              quality={95}
+              style={{
+                objectFit: "contain",
+                opacity: isLoaded && !isPortrait ? 1 : 0,
+                transition: "opacity 0.4s ease-in-out",
+              }}
+              onLoad={(e) => {
+                const img = e.currentTarget;
+                if (img.naturalHeight > img.naturalWidth) {
+                  setIsPortrait(true);
+                }
+                setIsLoaded(true);
+              }}
+              priority
+            />
+            {/* Soft edge fades to blend the image into the ambient background */}
+            <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#0a0f1e] to-transparent pointer-events-none hidden xl:block" />
+            <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#0a0f1e] to-transparent pointer-events-none hidden xl:block" />
+          </div>
+        </div>
+
+        {/* Bottom gradient fade */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0f1e] via-[#0a0f1e]/40 to-transparent pointer-events-none" />
+        {/* Left side gradient for text contrast */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0a0f1e]/90 via-transparent to-transparent pointer-events-none" />
       </div>
 
       {/* Content over backdrop */}
