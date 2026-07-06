@@ -55,12 +55,28 @@ export default function WatchPartyRoom({
 
   const isHost = userId === hostId;
 
+  console.log("WatchPartyRoom: Render info:", {
+    partyRoomId,
+    m3u8Url,
+    embedUrl,
+    userId,
+    hostId,
+    isHost,
+    isPlayerReady,
+  });
+
   // Hàm đồng bộ video theo trạng thái state từ Firebase
   const syncPlayerWithState = (state: any) => {
-    if (!db) return;
+    if (!db) {
+      console.log("WatchPartyRoom: db is null, cannot sync player");
+      return;
+    }
     const { isPlaying, currentTime, updatedAt } = state;
     const player = playerRef.current;
-    if (!player) return;
+    if (!player) {
+      console.log("WatchPartyRoom: playerRef is null, cannot sync player");
+      return;
+    }
 
     // Tính toán thời gian mong muốn dựa trên độ trễ truyền tin
     const elapsed = (Date.now() - updatedAt) / 1000;
@@ -68,19 +84,30 @@ export default function WatchPartyRoom({
     
     const localIsPlaying = player.getIsPlaying();
     const localTime = player.getCurrentTime();
+    const drift = Math.abs(localTime - expectedTime);
 
     // Đồng bộ trạng thái Phát/Tạm dừng
+    console.log("WatchPartyRoom: Đồng bộ video...", {
+      state,
+      expectedTime,
+      localIsPlaying,
+      localTime,
+      drift
+    });
+
     if (isPlaying && !localIsPlaying) {
+      console.log("WatchPartyRoom: Host đang PLAY -> Đồng bộ nhảy đến time & phát:", expectedTime);
       player.seekTo(expectedTime);
       player.play();
     } else if (!isPlaying && localIsPlaying) {
+      console.log("WatchPartyRoom: Host đang PAUSE -> Đồng bộ tạm dừng:", expectedTime);
       player.pause();
       player.seekTo(expectedTime);
     }
 
     // Đồng bộ Tua (Seek) nếu lệch quá 1.8 giây
-    const drift = Math.abs(localTime - expectedTime);
     if (drift > 1.8) {
+      console.log(`WatchPartyRoom: Lệch time quá lớn (${drift}s) -> Đồng bộ Tua tới:`, expectedTime);
       player.seekTo(expectedTime);
     }
   };
@@ -115,10 +142,11 @@ export default function WatchPartyRoom({
       setIsLoadingRoom(false);
 
       if (!data) {
-        // Phòng không tồn tại, tự động tạo phòng mới hoặc thoát
+        console.log("WatchPartyRoom: Phòng không tồn tại trong Firebase:", partyRoomId);
         return;
       }
 
+      console.log("WatchPartyRoom: Nhận dữ liệu phòng từ Firebase:", data);
       setHostId(data.hostId || "");
       
       // Đếm số người tham gia (nếu có lưu)
@@ -132,6 +160,7 @@ export default function WatchPartyRoom({
       if (data.state) {
         latestRoomState.current = data.state;
         
+        console.log("WatchPartyRoom: State nhận được:", data.state, "isPlayerReady:", isPlayerReady);
         // Chỉ tiến hành đồng bộ nếu trình phát đã sẵn sàng và người dùng không phải Host
         if (isPlayerReady && userId !== data.hostId) {
           syncPlayerWithState(data.state);
@@ -171,6 +200,7 @@ export default function WatchPartyRoom({
   // Đồng bộ thời gian ban đầu ngay khi trình phát video báo SẴN SÀNG (loadedmetadata)
   useEffect(() => {
     if (isPlayerReady && latestRoomState.current && userId && userId !== hostId) {
+      console.log("WatchPartyRoom: Video ready -> Thực hiện đồng bộ ban đầu với state:", latestRoomState.current);
       syncPlayerWithState(latestRoomState.current);
     }
   }, [isPlayerReady, userId, hostId]);
@@ -223,6 +253,7 @@ export default function WatchPartyRoom({
   const updateFirebaseState = (action: string, time: number, isPlaying: boolean) => {
     if (!partyRoomId || !isHost) return;
     
+    console.log("WatchPartyRoom (Host): Ghi đè trạng thái video lên Firebase:", { action, time, isPlaying });
     const stateRef = ref(db, `rooms/${partyRoomId}/state`);
     update(stateRef, {
       isPlaying,
