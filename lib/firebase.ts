@@ -11,8 +11,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase for Client-side
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-const db = getDatabase(app);
+let app: any = null;
+let db: any = null;
+
+if (firebaseConfig.apiKey) {
+  try {
+    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    db = getDatabase(app);
+  } catch (error) {
+    console.error("Firebase initialization failed:", error);
+  }
+}
 
 export { app, db };

@@ -73,7 +73,7 @@ export default function WatchPartyRoom({
 
   // 2. Kết nối và đồng bộ phòng từ Firebase
   useEffect(() => {
-    if (!partyRoomId || !userId) return;
+    if (!partyRoomId || !userId || !db) return;
 
     setIsLoadingRoom(true);
     const roomRef = ref(db, `rooms/${partyRoomId}`);
@@ -138,6 +138,8 @@ export default function WatchPartyRoom({
         setChatMessages([]);
       }
     });
+
+    if (!db || !partyRoomId) return;
 
     // Đăng ký sự có mặt của người xem (Participants)
     const myParticipantRef = ref(db, `rooms/${partyRoomId}/participants/${userId}`);
@@ -288,7 +290,16 @@ export default function WatchPartyRoom({
         <div 
           className="mt-4 p-5 rounded-xl border border-white/5 bg-white/[0.02] backdrop-blur-md"
         >
-          {!partyRoomId ? (
+          {!db ? (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h4 className="text-white font-bold text-base mb-1">Xem Phim Chung (Watch Party)</h4>
+                <p className="text-xs text-[#8892b0]">
+                  Tính năng Xem Chung hiện chưa được cấu hình trên môi trường này (Thiếu biến môi trường Firebase API Key). Vui lòng thêm các khóa cấu hình trong bảng điều khiển Cloudflare.
+                </p>
+              </div>
+            </div>
+          ) : !partyRoomId ? (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div>
                 <h4 className="text-white font-bold text-base mb-1">Xem Phim Chung (Watch Party)</h4>
