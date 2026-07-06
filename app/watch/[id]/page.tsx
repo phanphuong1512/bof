@@ -9,6 +9,33 @@ import { getFilmDetail, getRecentMovies } from "@/lib/api";
 type Params = Promise<{ id: string }>;
 type SearchParams = Promise<{ ep?: string; server?: string; party?: string }>;
 
+async function fetchM3u8FromOphim(movieSlug: string, episodeName: string): Promise<string> {
+  try {
+    const res = await fetch(`https://phimapi.com/phim/${movieSlug}`, {
+      next: { revalidate: 3600 }
+    });
+    if (!res.ok) return "";
+    const data = await res.json();
+    
+    const serverItems = data.episodes?.[0]?.server_data || [];
+    
+    const cleanNum = (name: string) => {
+      if (!name) return null;
+      const match = name.match(/\d+/);
+      return match ? parseInt(match[0], 10) : null;
+    };
+    
+    const targetNum = cleanNum(episodeName);
+    if (targetNum === null) return "";
+    
+    const epItem = serverItems.find((ep: any) => cleanNum(ep.name) === targetNum);
+    return epItem?.link_m3u8 || "";
+  } catch (error) {
+    console.error("Failed to fetch m3u8 from Ophim:", error);
+    return "";
+  }
+}
+
 export default async function WatchPage({
   params,
   searchParams,
@@ -34,8 +61,13 @@ export default async function WatchPage({
     ? serverData?.items.find((item) => item.slug === ep)
     : serverData?.items[0];
   const embedUrl = episodeItem?.embed ?? "";
-  const m3u8Url = episodeItem?.m3u8 ?? "";
   const episodeName = episodeItem?.name ?? "";
+
+  // Fetch direct HLS m3u8Url to enable custom player & watch party sync
+  let m3u8Url = "";
+  if (episodeName) {
+    m3u8Url = await fetchM3u8FromOphim(movie.slug, episodeName);
+  }
 
   return (
     <div className="min-h-screen" style={{ background: "#0a0f1e" }}>
